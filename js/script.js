@@ -1,82 +1,105 @@
-// Função para criar um card
-function createCard(contact) {
-    const cardContainer = document.getElementById('cardContainer');
-    const card = document.createElement('div');
-    card.classList.add('card');
 
-    // Conteúdo do card
-    card.innerHTML = `
-        <img src="${contact.foto}" alt="${contact.nome}">
-        <h2>${contact.nome}</h2>
-        <p>Telefone: ${contact.telefone}</p>
-        <p>Email: ${contact.email}</p>
-        <div class="gridButton">
-        <button class="favorite-button" id="favorite">${contact.favorito ? 'Desfavoritar' : 'Favoritar'}</button>
-        <button class="buttonSet" id="setCard">Editar</button>
-        <button class="buttonRemove" id="removeCard" onclick="removeCard('${contact.nome}')">Remover</button>
-        </div>
-    `;
+const containerCard = document.getElementById('cardContainer')
 
-    cardContainer.appendChild(card);
+const createCard = (contato) => {
 
-    // Adicionar um evento de favoritar/desfavoritar ao botão
-    const favoriteButton = card.querySelector('.favorite-button');
-    favoriteButton.addEventListener('click', () => {
-        contact.favorito = !contact.favorito;
-        favoriteButton.textContent = contact.favorito ? 'Desfavoritar' : 'Favoritar';
-
-        console.log(!contact.favorito)
     
-        if(!contact.favorito){
-            favoriteButton.classList.remove('favorite-button-No')
-            favoriteButton.classList.add('favorite-button')
-            
-    
-        }else{
-            favoriteButton.classList.remove('favorite-button')
-            favoriteButton.classList.add('favorite-button-No')    
-        }
 
-    });
+    const card = document.createElement('div')
+    card.className = "card"
+
+    const imgContato = document.createElement('img')
+    imgContato.src = contato.foto
+    imgContato.alt = contato.nome
+
+    const nomeContato = document.createElement('h2')
+    nomeContato.textContent = contato.nome
+
+    const telefoneContato = document.createElement('p')
+    telefoneContato.textContent = contato.telefone
+
+    const emailContato = document.createElement('p')
+    emailContato.textContent = contato.email
+
+    const containerButton = document.createElement('div')
+    containerButton.className = "gridButton"
+
+    const buttonFavorito = document.createElement('button')
+    buttonFavorito.className = "favorite-button"
+    buttonFavorito.id = "favorite"
+    buttonFavorito.textContent = contato.favorito ? 'Desfavoritar' : 'Favoritar'
+
+    const buttonEditar = document.createElement('button')
+    buttonEditar.className = "buttonSet"
+    buttonEditar.id = "setCard"
+    buttonEditar.textContent = "Editar"
+    
+    const buttonRemover = document.createElement('button')
+    buttonRemover.className = "buttonRemove"
+    buttonRemover.id = "removeCard"
+    buttonRemover.textContent = "Deletar"
+    buttonRemover.onclick = () => deleteCard(contato.id);
+
+    containerButton.appendChild(buttonFavorito)
+    containerButton.appendChild(buttonEditar)
+    containerButton.appendChild(buttonRemover)
+
+
+
+    card.appendChild(imgContato)
+    card.appendChild(nomeContato)
+    card.appendChild(telefoneContato)
+    card.appendChild(emailContato)
+    card.appendChild(containerButton)
+
+    containerCard.appendChild(card)
+
+
 
 }
 
-// Função para carregar os dados da API usando fetch
-async function loadContacts() {
+const loadCard = async () => {
     try {
-        const response = await fetch('http://127.0.0.1:5600/contatosList');
-        const contacts = await response.json();
+        const response = await fetch("http://localhost:3001/contatos/listarContatos")
 
-        contacts.forEach((contact) => {
-            createCard(contact);
-        });
+        if (response.status === 200) {
+            const data = await response.json()
+
+            data.Data.forEach(contato => {
+                createCard(contato)
+            });
+        } else {
+            console.error("Erro ao buscar contatos: ", response.status)
+        }
+
     } catch (error) {
-        console.error('Erro ao carregar os contatos da API:', error);
+        console.error("Erro na requisição:", error)
+    }
+}
+
+const deleteCard = async function (id) {
+    const options = {
+        method: "DELETE",
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3001/contatos/deletarContato/${id}`, options)
+
+        if (response.status === 204) {
+            alert("Contato deletado com Sucesso!!!")
+            containerCard.replaceChildren()
+            loadCard()
+        } else {
+            alert("Erro ao Excluir Contato!")
+        }
+
+    } catch (error) {
+        console.error("Erro ao deletar:", error)
     }
 }
 
 
-async function removeCard(nome) {
-    try {
-
-        window.location.reload();
-        await fetch(`http://127.0.0.1:5600/deletarContato/${nome}`, {
-            method: 'DELETE' // Especifique o método DELETE
-            
-        });   
-        
-        
-    } catch (error) {
-        console.error('Ocorreu um erro na requisição:', error);
-    }    
-}
-
-//Adicionar um evento ao botão "Adicionar Card"
-const addButton = document.getElementById('addCard');
-addButton.addEventListener('click', () => {
-    const cadastro = "./src/screens/cadastro.html"
-    window.location.href = cadastro    
-});
-
-// Carregar os contatos da API ao carregar a página
-loadContacts();
+loadCard()
